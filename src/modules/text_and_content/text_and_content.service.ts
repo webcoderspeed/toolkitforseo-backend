@@ -1,44 +1,63 @@
 import { Injectable } from '@nestjs/common';
 import {
+  PlagiarismCheckerDto,
   ParaphraseResponseDto,
   AIContentResponseDto,
   ProofreadResponseDto,
   RephraseResponseDto,
   SummarizeResponseDto,
   GrammarCheckResponseDto,
-  TextInputDto,
 } from './dtos';
-import { GeminiVendor } from '@app/common/vendor_apis';
 import { outputParser, tryCatch } from '@app/common';
+import { AIVendorFactory } from '@app/common/factories';
 
 @Injectable()
 export class TextAndContentService {
-  constructor(private readonly _geminiApiService: GeminiVendor) {}
-
-  async checkPlagiarism(dto: TextInputDto, api_key: string) {
+  async checkPlagiarism(dto: PlagiarismCheckerDto, api_key: string) {
     try {
+      const {
+        text,
+        settings = {
+          detection_model: 'Standard',
+        },
+      } = dto;
+
       const prompt = `
-        You are an expert plagiarism detection system. Analyze the following text and determine if any part of it appears to be plagiarized from online sources.
+    You are an expert plagiarism detection system. Analyze the following text and determine if any part of it appears to be plagiarized from online sources.
 
-        Return a JSON object with the following structure:
+    Based on the provided detection_model, adjust the sensitivity and thoroughness of your analysis.
+
+    Available detection_models:
+
+    - Standard: A balanced approach, suitable for general plagiarism checks.
+    - Academic: More sensitive and thorough, designed for academic content.
+    - Thorough: The most rigorous analysis, checking for subtle similarities.
+
+    Detection Model: ${settings?.detection_model ?? 'Standard'}
+
+    Text to analyze:
+
+    ${text}
+
+    Return a JSON object with the following structure:
+    {
+      "score": <a numeric score from 0 to 100 representing the overall likelihood of plagiarism>,
+      "original_content": <a numeric value from 0 to 100 representing the percentage of original content>,
+      "plagiarized_content": <a numeric value from 0 to 100 representing the percentage of plagiarized content>,
+      "sources": [
         {
-          "score": <a numeric score from 0 to 100 representing the overall likelihood of plagiarism>,
-          "original_content": <a numeric value from 0 to 100 representing the percentage of original content>,
-          "plagiarized_content": <a numeric value from 0 to 100 representing the percentage of plagiarized content>,
-          "sources": [
-            {
-              "url": "<source URL that closely matches the plagiarized content>",
-              "similarity": <percentage similarity to this source (0 to 100)>
-            }
-            // You may include multiple sources if applicable
-          ]
+          "url": "<source URL that closely matches the plagiarized content>",
+          "similarity": <percentage similarity to this source (0 to 100)>
         }
+        // You may include multiple sources if applicable
+      ]
+    }
       `;
+      const vendor = AIVendorFactory.createVendor(dto.vendor ?? 'gemini');
 
-      const response = await this._geminiApiService.ask({
-        prompt: dto?.prompt ?? prompt,
-        api_key: api_key,
-        text: dto.text,
+      const response = await vendor.ask({
+        prompt,
+        api_key,
         ...(dto?.model ? { model: dto.model } : {}),
       });
 
@@ -85,42 +104,6 @@ export class TextAndContentService {
       };
     } catch (error) {
       throw new Error('Failed to proofread text');
-    }
-  }
-
-  async rewriteArticle(dto: TextInputDto, api_key: string) {
-    try {
-      const {
-        text,
-        prompt = `
-        You are an expert article rewriter. Your task is to analyze a given article and rewrite it to enhance its clarity, coherence, and overall quality.
-        Analyze the article thoroughly, paying attention to its structure, content, and overall tone. Identify any areas that may need improvement, such as unclear sentences, inconsistent grammar, or missing key information.
-        Use your expertise in writing to suggest improvements that enhance the clarity and effectiveness of the article. Consider the target audience and the intended audience for the rewritten article.
-        Provide a well-structured and well-organized rewrite of the article, ensuring that it retains its original meaning and context.
-        Return a JSON response in the following format:
-        \`\`\`json
-        {
-          "originalText": string, // The original text being analyzed
-          "rewrittenText": string, // The rewritten text
-        }
-        \`\`\`
-        Ensure that the JSON response is well-formed and adheres strictly to the specified format. Any deviations from the format may result in parsing errors.
-        Provide the JSON response without any additional explanatory text or preamble. Only include the JSON itself. Ensure no comments are provided in JSON, no extra new lines at the begining and end.
-      `,
-      } = dto;
-
-      const response = await this._geminiApiService.ask({
-        prompt: prompt,
-        api_key: api_key,
-        text: text,
-        ...(dto?.model ? { model: dto.model } : {}),
-      });
-
-      const cleaned = response.replace(/```json\n?/, '').replace(/\n?```/, '');
-      const parsed = JSON.parse(cleaned);
-      return parsed;
-    } catch (error) {
-      throw new Error('Failed to rewrite article');
     }
   }
 

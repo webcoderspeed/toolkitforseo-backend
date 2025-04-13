@@ -17,16 +17,13 @@ export class GeminiVendor implements AIVendor {
     const {
       api_key,
       model = this.configService.get<string>(GEMINI_DEFAULT_MODEL),
-      text,
-      prompt = `
-    Analyze the following text and answer it like human would do.
-    `,
+      prompt = ` Analyze the following text and answer it like human would do`,
     } = payload;
 
     const payloadData = {
       contents: [
         {
-          parts: [{ text: `${prompt}\n\n${text}` }],
+          parts: [{ text: prompt }],
         },
       ],
     };

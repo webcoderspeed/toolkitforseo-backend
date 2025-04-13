@@ -1,6 +1,7 @@
+export type AIVendorType = 'gemini' | 'openai';
+
 export interface AIVendorPayload {
   prompt?: string;
-  text: string;
   api_key: string;
   model?: string;
 }

@@ -1,8 +1,26 @@
-import { AIVendorPayload } from '@app/common/types';
+import { ALL_PLAGIARISM_CHECKER_DETECTION_MODEL } from '@app/common';
+import {
+  AIVendorPayload,
+  AIVendorType,
+  IPlagiarismCheckerDetectionModelType,
+} from '@app/common/types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  ValidateNested,
+} from 'class-validator';
 
-export class TextInputDto {
+export class PlagiarismCheckerSettingsDto {
+  @IsEnum(ALL_PLAGIARISM_CHECKER_DETECTION_MODEL)
+  @IsNotEmpty()
+  detection_model?: IPlagiarismCheckerDetectionModelType = 'Standard';
+}
+
+export class PlagiarismCheckerDto {
   @ApiProperty({
     description: 'The text to be processed',
     example: 'This is a sample text for processing.',
@@ -17,7 +35,12 @@ export class TextInputDto {
 
   @IsOptional()
   @IsString()
-  prompt?: string;
+  vendor?: AIVendorType = 'gemini';
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PlagiarismCheckerSettingsDto)
+  settings?: PlagiarismCheckerSettingsDto;
 }
 
 export class PlagiarismResponseDto {
