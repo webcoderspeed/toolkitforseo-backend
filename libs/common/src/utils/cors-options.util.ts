@@ -14,6 +14,7 @@ export function corsOptions(ORIGINS: string) {
       'Access-Control-Allow-Headers',
       'App',
       'X-Trace-Id',
+      'X-Api-Key',
     ],
   };
 }

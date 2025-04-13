@@ -22,15 +22,15 @@ export class TextAndContentService {
 
         Return a JSON object with the following structure:
         {
-          "score": <a numeric score from 0 to 100 representing the likelihood of plagiarism>,
-          "original_content": "<segments of the text that appear to be original>",
-          "plagiarized_content": "<segments of the text that appear to be plagiarized or heavily borrowed>",
+          "score": <a numeric score from 0 to 100 representing the overall likelihood of plagiarism>,
+          "original_content": <a numeric value from 0 to 100 representing the percentage of original content>,
+          "plagiarized_content": <a numeric value from 0 to 100 representing the percentage of plagiarized content>,
           "sources": [
             {
               "url": "<source URL that closely matches the plagiarized content>",
               "similarity": <percentage similarity to this source (0 to 100)>
-            },
-            ...
+            }
+            // You may include multiple sources if applicable
           ]
         }
       `;
