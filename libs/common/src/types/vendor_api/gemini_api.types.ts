@@ -1,3 +1,5 @@
+import { AIVendor } from './ai-vendor.types';
+
 export interface GeminiResponse {
   candidates: Candidate[];
   promptFeedback: PromptFeedback;
@@ -34,9 +36,4 @@ export interface UsageMetadata {
   totalTokenCount: number;
 }
 
-export interface GeminiAskPayload {
-  prompt?: string;
-  text: string;
-  api_key: string;
-  model?: 'gemini-2.0-flash' | string;
-}
+export interface GeminiVendorService extends AIVendor {}

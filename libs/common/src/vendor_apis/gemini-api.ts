@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { HttpClient } from '../http_client';
 import { GEMINI_API_URL, GEMINI_DEFAULT_MODEL } from '../constants';
-import { GeminiAskPayload, GeminiResponse } from '../types';
+import { AIVendor, AIVendorPayload, GeminiResponse } from '../types';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class GeminiApiService {
+export class GeminiVendor implements AIVendor {
   private readonly configService = new ConfigService();
   private readonly GEMINI_API_URL =
     this.configService.get<string>(GEMINI_API_URL);
@@ -13,14 +13,14 @@ export class GeminiApiService {
     timeout: 10000,
   });
 
-  async ask(payload: GeminiAskPayload) {
+  async ask(payload: AIVendorPayload): Promise<string> {
     const {
       api_key,
       model = this.configService.get<string>(GEMINI_DEFAULT_MODEL),
       text,
       prompt = `
-      Analyze the following text and answer it like human would do.
-      `,
+    Analyze the following text and answer it like human would do.
+    `,
     } = payload;
 
     const payloadData = {

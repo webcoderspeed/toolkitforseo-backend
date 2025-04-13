@@ -1,4 +1,4 @@
-import { GeminiAskPayload } from '@app/common/types';
+import { AIVendorPayload } from '@app/common/types';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
@@ -13,7 +13,7 @@ export class TextInputDto {
 
   @IsOptional()
   @IsString()
-  model?: GeminiAskPayload['model'];
+  model?: AIVendorPayload['model'];
 
   @IsOptional()
   @IsString()

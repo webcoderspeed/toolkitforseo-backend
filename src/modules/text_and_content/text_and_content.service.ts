@@ -8,11 +8,12 @@ import {
   GrammarCheckResponseDto,
   TextInputDto,
 } from './dtos';
-import { GeminiApiService } from '@app/common/vendor_apis';
+import { GeminiVendor } from '@app/common/vendor_apis';
+import { outputParser, tryCatch } from '@app/common';
 
 @Injectable()
 export class TextAndContentService {
-  constructor(private readonly _geminiApiService: GeminiApiService) {}
+  constructor(private readonly _geminiApiService: GeminiVendor) {}
 
   async checkPlagiarism(dto: TextInputDto, api_key: string) {
     try {
@@ -32,7 +33,7 @@ export class TextAndContentService {
             ...
           ]
         }
-`;
+      `;
 
       const response = await this._geminiApiService.ask({
         prompt: dto?.prompt ?? prompt,
@@ -41,10 +42,11 @@ export class TextAndContentService {
         ...(dto?.model ? { model: dto.model } : {}),
       });
 
-      const cleaned = response.replace(/```json\n?/, '').replace(/\n?```/, '');
-      const parsed = JSON.parse(cleaned);
+      const { data, error } = await tryCatch(() => outputParser(response));
 
-      return parsed;
+      if (error) throw new Error('Failed to check plagiarism');
+
+      return data;
     } catch (error) {
       console.error('Plagiarism check failed:', error);
       throw new Error('Failed to check plagiarism');
