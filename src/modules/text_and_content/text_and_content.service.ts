@@ -5,8 +5,8 @@ import {
   ProofreadResponseDto,
   RephraseResponseDto,
   SummarizeResponseDto,
-  GrammarCheckResponseDto,
   ParaphraseDto,
+  GrammarCheckerDto,
 } from './dtos';
 import { outputParser, tryCatch } from '@app/common';
 import { AIVendorFactory } from '@app/common/factories';
@@ -172,13 +172,57 @@ export class TextAndContentService {
     }
   }
 
-  async checkGrammar(text: string): Promise<GrammarCheckResponseDto> {
+  async checkGrammar(dto: GrammarCheckerDto, api_key: string) {
     try {
-      return {
-        originalText: text,
-        errors: [],
-        suggestions: [],
-      };
+      const { text } = dto;
+
+      const prompt = `
+           You are an advanced grammar and spelling checker. Analyze the following text and identify any grammatical errors, spelling mistakes, and punctuation issues.
+
+          Text to analyze:
+
+          ${text}
+
+          Instructions:
+
+          1. Identify all grammatical errors, spelling mistakes, and punctuation issues in the provided text.
+          2. For each error, provide the following information:
+            - type: "grammar", "spelling", or "punctuation" indicating the type of error.
+            - text: The incorrect text found in the original input.
+            - suggestion: A corrected version of the incorrect text.
+            - position: An array containing the start and end character positions [start, end] of the incorrect text within the original input.
+          3. Provide an overall score (0 to 100) representing the grammatical correctness of the text. 100 indicates perfect grammar.
+          4. Return the results in a JSON object with the following structure:
+            {
+              "errors": [
+                {
+                  "type": "grammar" | "spelling" | "punctuation",
+                  "text": string,
+                  "suggestion": string,
+                  "position": [number, number]
+                },
+                // ... more errors if found ...
+              ],
+              "score": number,
+              "corrected_text":  <string>
+            }
+
+          Output JSON:
+        `;
+
+      const vendor = AIVendorFactory.createVendor(dto.vendor ?? 'gemini');
+
+      const response = await vendor.ask({
+        prompt,
+        api_key,
+        ...(dto?.model ? { model: dto.model } : {}),
+      });
+
+      const { data, error } = await tryCatch(() => outputParser(response));
+
+      if (error) throw new Error('Failed to check grammar');
+
+      return data;
     } catch (error) {
       throw new Error('Failed to check grammar');
     }

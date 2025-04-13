@@ -26,4 +26,14 @@ export class TextAndContentController {
     console.log('X-TRACE-ID:', traceId);
     return this.textAndContentService.paraphraseText(dto, apiKey);
   }
+
+  @Post('grammar-check')
+  async checkGrammar(
+    @Body() dto: ParaphraseDto,
+    @Headers(X_TRACE_ID) traceId: string,
+    @Headers(X_API_KEY) apiKey: string,
+  ) {
+    console.log('X-TRACE-ID:', traceId);
+    return this.textAndContentService.checkGrammar(dto, apiKey);
+  }
 }
