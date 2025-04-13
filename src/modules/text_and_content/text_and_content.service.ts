@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
   PlagiarismCheckerDto,
-  ParaphraseResponseDto,
   AIContentResponseDto,
   ProofreadResponseDto,
   RephraseResponseDto,
   SummarizeResponseDto,
   GrammarCheckResponseDto,
+  ParaphraseDto,
 } from './dtos';
 import { outputParser, tryCatch } from '@app/common';
 import { AIVendorFactory } from '@app/common/factories';
@@ -72,11 +72,54 @@ export class TextAndContentService {
     }
   }
 
-  async paraphraseText(text: string): Promise<ParaphraseResponseDto> {
+  async paraphraseText(dto: ParaphraseDto, api_key: string) {
     try {
+      const {
+        text,
+        settings = {
+          mode: 'Standard',
+          strength: 50,
+        },
+      } = dto;
+
+      const prompt = `
+    You are an advanced paraphrasing tool. Your task is to rewrite the given text while maintaining its original meaning. You will adjust the style and vocabulary based on the provided settings.
+
+    Available modes:
+
+    - Standard: Focuses on clarity and natural language, suitable for general use.
+    - Fluency: Emphasizes smooth and sophisticated language, ideal for professional content.
+    - Creative: Prioritizes originality and artistic expression, suitable for creative writing.
+
+    Settings:
+
+    - Mode: ${settings?.mode ?? 'Standard'}
+    - Strength: ${settings?.strength ?? 50} (A value from 0 to 100, where 0 means minimal change and 100 means maximum change)
+
+    Input Text:
+
+    ${text}
+
+    Instructions:
+
+    1. Analyze the input text and the provided settings.
+    2. Apply the specified mode to adjust the style and vocabulary of the text.
+    3. Use the strength setting to control the degree of change. A higher strength will result in more significant alterations to the text.
+    4. Maintain the original meaning of the text throughout the paraphrasing process.
+    5. Return only the paraphrased text. Do not include any additional explanations or JSON formatting.
+
+    Paraphrased Text:
+  `;
+
+      const vendor = AIVendorFactory.createVendor(dto.vendor ?? 'gemini');
+      const response = await vendor.ask({
+        prompt,
+        api_key,
+        ...(dto?.model ? { model: dto.model } : {}),
+      });
+
       return {
-        originalText: text,
-        paraphrasedText: text,
+        paraphrased_text: response,
       };
     } catch (error) {
       throw new Error('Failed to paraphrase text');
