@@ -10,7 +10,7 @@ export class GeminiVendor implements AIVendor {
   private readonly GEMINI_API_URL =
     this.configService.get<string>(GEMINI_API_URL);
   private readonly httpClient = new HttpClient(this.GEMINI_API_URL, {
-    timeout: 10000,
+    timeout: 600000,
   });
 
   async ask(payload: AIVendorPayload): Promise<string> {
